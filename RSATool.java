@@ -27,7 +27,7 @@ public class RSATool {
 
     // SecureRandom for OAEP and key generation
     private SecureRandom rnd;
-    
+
     private boolean debug = false;
 
 
@@ -135,11 +135,11 @@ public class RSATool {
     while(!(e.gcd(phi_n).equals(BigInteger.ONE)));
 
     d = e.modInverse(phi_n);
-	
+
     //CRT
     dp = d.mod(p.subtract(BigInteger.ONE));
     dq = d.mod(q.subtract(BigInteger.ONE));
-    
+
     }
 
 
@@ -187,12 +187,12 @@ public class RSATool {
 	    throw new IllegalArgumentException("plaintext longer than one block");
 
     BigInteger enM, enC;
-    
+
     enM = new BigInteger(plaintext);
-    enC = encryptRSA_OAEP(plaintext);  
+    enC = encryptRSA_OAEP(plaintext);
     //enC = enM.modPow(e,n); //regular
     enC = enC.modPow(e,n);
-    
+
 	// TODO:  implement RSA-OAEP encryption here (replace following return statement)
 	return enC.toByteArray();
     }
@@ -216,31 +216,40 @@ public class RSATool {
 	    throw new IllegalStateException("RSA class not initialized for decryption");
 
     BigInteger deC, m1, m2, qinv, h, deM,valid;
-    
+
     deC = new BigInteger(ciphertext);
-    
+
     System.out.println("deC length: "+deC.toByteArray().length);
-    
+    //System.out.println("deC array: "+toHexString(deC.toByteArray()));
+
     //https://en.wikipedia.org/wiki/RSA_(cryptosystem)#Using_the_Chinese_remainder_algorithm
     /*
     m1 = deC.modPow(dp,p);
     m2 = deC.modPow(dq,q);
     qinv = q.modInverse(p);
-    h = (qinv.multiply(m1.subtract(m2))).mod(p);    
+    h = (qinv.multiply(m1.subtract(m2))).mod(p);
     deM = m2.add(h.multiply(q)); //CRT
     */
+
+    //BigInteger modInv = e.multiply(d).mod(phi_n);
+    //System.out.println(modInv);
+
     deM = deC.modPow(d,n);       //regular decryption
-    
+
     System.out.println("deM length: "+deM.toByteArray().length);
-    
+
+
 	valid = decryptRSA_OAEP(deM.toByteArray());
-    
+
     if (valid == null)
 	    throw new IllegalArgumentException("the ciphertext is not valid, REJECT.");
 
-    System.out.println(toHexString(deM.toByteArray()));
-    
-	return deM.toByteArray();
+    //System.out.println(toHexString(deM.toByteArray()));
+
+    byte[] finalreturn = new byte[K1];
+    System.arraycopy(deM.toByteArray(), 0, finalreturn, 0, K1);
+    //System.out.println("final: "+toHexString(finalreturn));
+	return finalreturn;
     }
 
     public BigInteger getSGP()
@@ -255,105 +264,105 @@ public class RSATool {
 
         return sgPrime;
     }
-    
+
     public BigInteger encryptRSA_OAEP(byte[] M)
     {
         BigInteger gr,BIm0k1,s,t,BIC;
         byte[] r,zeros,m0k1,byteS,byteT,C;
-        
+
         do
         {
         r = new byte[K0];
         rnd.nextBytes(r);
-        
+
 		//System.out.println("r: "+ toHexString(r));
-        
+
         zeros = new byte[K1];
         Arrays.fill(zeros,(byte) 0);
-        
+
         m0k1 = new byte[M.length + zeros.length];
         System.arraycopy(M, 0, m0k1, 0, M.length);
         System.arraycopy(zeros, 0, m0k1, M.length, zeros.length);
-        
+
         BIm0k1 = new BigInteger(m0k1);
         gr = new BigInteger(G(r));
-        
+
         s = BIm0k1.xor(gr);
         byteS = s.toByteArray();
-		
+
 		//System.out.println("s: "+ toHexString(byteS));
-        
+
         t = (new BigInteger(r)).xor(new BigInteger(H(byteS)));
         byteT = t.toByteArray();
-        
+
 		//System.out.println("t: "+ toHexString(byteT));
-		
+
         C = new byte[byteS.length + byteT.length];
 
         System.arraycopy(byteS, 0, C, 0, byteS.length);
         System.arraycopy(byteT, 0, C, byteS.length, byteT.length);
-        
+
         BIC = new BigInteger(C);
         }while((BIC.compareTo(n) == 1) || ((new BigInteger(C)).compareTo(BigInteger.ZERO) == -1));
-            
+
 		//System.out.println(new BigInteger(r));
 		//System.out.println(BIm0k1);
 		//System.out.println(s);
 		//System.out.println(t);
 		//System.out.println(BIC);
 		//System.out.println("C: "+ toHexString(C));
-			
+
         return BIC;
     }
-    
+
     public BigInteger decryptRSA_OAEP(byte[] C)
     {
         BigInteger s,t,u,v,BIm0k1;
         byte[] byteS,byteT,zeros,Vzeros,byteV;
-          
+
         System.out.println("C length: " + C.length);
-             
+
         //System.out.println("C: "+ toHexString(C));
-         
+
         byteS = new byte[K-K0];
         byteT = new byte[K0];
-        System.arraycopy(C,0,byteS,0,K-K0);
-        System.arraycopy(C,K-K0,byteT,0,K0);
-        
+        System.arraycopy(C,0,byteS,0,112);
+        System.arraycopy(C,112,byteT,0,K0);
+
         s = new BigInteger(byteS);
-		
+
 		//System.out.println("s: "+ toHexString(byteS));
-		
+
         t = new BigInteger(byteT);
-		
+
 		//System.out.println("t: "+ toHexString(byteT));
-        
+
         u = t.xor(new BigInteger(H(byteS)));
         v = s.xor(new BigInteger(G(u.toByteArray())));
-        
+
         byteV = v.toByteArray();
-        
+
 		//System.out.println(toHexString(u.toByteArray()));
 		//System.out.println(v.toByteArray().length);
         //System.out.println("v: "+ toHexString(v.toByteArray()));
         //System.out.println("u: "+ toHexString(u.toByteArray()));
-        
+
         zeros = new byte[K1];
         Arrays.fill(zeros,(byte) 0);
-        
+
         Vzeros = new byte[K1];
         System.arraycopy(byteV,byteV.length-K1,Vzeros,0,K1);
-        
+
         //System.out.println("m0k1: "+ toHexString(m0k1));
-        
-        //System.out.println(toHexString(byteV));
+
+        //System.out.println(toHexString(v.toByteArray()));
         //System.out.println(toHexString(zeros));
         //System.out.println(toHexString(Vzeros));
-        
+
         if(Arrays.equals(Vzeros,zeros))
-            return (new BigInteger(C));
+            return (v);
         else
-            return null;    
+            return null;
     }
     public String toHexString(byte[] block) {
         StringBuffer buf = new StringBuffer();
@@ -365,7 +374,7 @@ public class RSATool {
 	    if (i < len-1) {
 		buf.append(":");
 	    }
-        } 
+        }
         return buf.toString();
     }
     public void byte2hex(byte b, StringBuffer buf) {
@@ -376,5 +385,5 @@ public class RSATool {
         buf.append(hexChars[high]);
         buf.append(hexChars[low]);
     }
-    
+
 }
