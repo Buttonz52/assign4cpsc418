@@ -60,7 +60,7 @@ public class CryptoUtilities {
 
 
     /**
-     * Computes a HMAC-SHA1 message digest of a given message, appends it to the 
+     * Computes a HMAC-SHA1 message digest of a given message, appends it to the
      * message, returns the output.
      *
      * @param message  the message (in bytes)
@@ -70,27 +70,27 @@ public class CryptoUtilities {
     public static byte[] append_hash(byte[] message, SecretKeySpec keySpec)
     {
 	byte[] ret = null;
-		
+
 	try {
 	    // Initialize the MAC with the given key
 	    Mac mac = Mac.getInstance("HmacSHA1");
 	    mac.init(keySpec);
-			
+
 	    // Compute the MAC
 	    byte[] m = mac.doFinal(message);
-			
+
 	    // Append the MAC to the message
 	    ret = new byte[message.length+m.length];
 	    System.arraycopy(message, 0, ret, 0, message.length);
 	    System.arraycopy(m, 0, ret, message.length, m.length);
-			
+
 	} catch (Exception e) {
 	    e.printStackTrace();
 	}
-		
+
 	return ret;
     }
-	
+
 
     /**
      * Extracts a message from a message/digest pair.
@@ -119,34 +119,34 @@ public class CryptoUtilities {
     public static boolean verify_hash(byte[] messageHash, SecretKeySpec keySpec)
     {
 	boolean ret = false;
-		
+
 	try {
 	    // Split the array into the message and the digest
 	    byte[] message = new byte[messageHash.length - HMAC_SHA1_LEN];
 	    byte[] hash = new byte[HMAC_SHA1_LEN];
-			
+
 	    System.arraycopy(messageHash, 0, message, 0, message.length);
 	    System.arraycopy(messageHash, message.length, hash, 0, hash.length);
-			
+
 	    // Initialize the MAC with the given key
 	    Mac mac = Mac.getInstance("HmacSHA1");
 	    mac.init(keySpec);
-			
+
 	    // Get the MAC of the message
 	    byte[] m = mac.doFinal(message);
-			
+
 	    // compare the the MAC sent and the one calculated
 	    ret = Arrays.equals(m, hash);
-			
+
 	} catch (Exception e) {
 	    // if there is an error, we know that hash can't be correct
 	    ret = false;
 	}
-		
+
 	return ret;
     }
 
-	
+
 
     /**
      * Encrypts the given message using the given key with AES-CBC.
@@ -158,30 +158,30 @@ public class CryptoUtilities {
     public static byte[] encrypt(byte[] message, SecretKeySpec keySpec)
     {
 	byte[] ret = null;
-		
+
 	try {
 	    // Initialize the cipher with the given key
 	    Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
 	    cipher.init(Cipher.ENCRYPT_MODE, keySpec);
-			
+
 	    // encrypt the message
 	    byte[] cipherText = cipher.doFinal(message);
 	    byte[] params = cipher.getParameters().getEncoded();
-			
+
 	    // Combine the ciphertext and cipher parameters into one byte array
 	    ret = new byte[cipherText.length+params.length];
-	    System.arraycopy(cipherText, 0, ret, 0, cipherText.length); 
+	    System.arraycopy(cipherText, 0, ret, 0, cipherText.length);
 	    System.arraycopy(params, 0, ret, cipherText.length, params.length);
 	} catch (Exception e) {
 	    e.printStackTrace();
 	}
-		
+
 	return ret;
     }
 
 
 
-	
+
     /**
      * Decrypts the given message using the given key with AES-CBC.
      *
@@ -192,30 +192,30 @@ public class CryptoUtilities {
     public static byte[] decrypt(byte[] decrypt, SecretKeySpec keySpec)
     {
 	byte[] message = null;
-		
+
 	try {
 	    // Extract the cipher parameters from the end of the input array
 	    byte[] cipherText = new byte[decrypt.length - AES_PARAM_LEN];
 	    byte[] paramsEnc = new byte[AES_PARAM_LEN];
-			
+
 	    System.arraycopy(decrypt, 0, cipherText, 0, cipherText.length);
 	    System.arraycopy(decrypt, cipherText.length, paramsEnc, 0, paramsEnc.length);
 
 	    // Initialize the parameters
 	    AlgorithmParameters params = AlgorithmParameters.getInstance("AES");
 	    params.init(paramsEnc);
-	        
+
 	    // Initialize the cipher for decryption
 	    Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
 	    cipher.init(Cipher.DECRYPT_MODE, keySpec, params);
-			
+
 	    // Decrypt the ciphertext
 	    message = cipher.doFinal(cipherText);
 
 	} catch (Exception e) {
 	    e.printStackTrace();
 	}
-		
+
 	return message;
     }
 
@@ -257,7 +257,7 @@ public class CryptoUtilities {
 	// read the message size
 	int size = in.readInt();
 
-	// read the message bytes into the array		
+	// read the message bytes into the array
 	message = new byte[size];
 	int i = 0;
 	int total = 0;
@@ -272,7 +272,7 @@ public class CryptoUtilities {
 
 
     /**
-     * Encrypts the given message using the given key with AES-CBC, and writes to 
+     * Encrypts the given message using the given key with AES-CBC, and writes to
      * the supplied stream.
      *
      * @param message  the message (in bytes)
@@ -324,7 +324,7 @@ public class CryptoUtilities {
 	    if (i < len-1) {
 		buf.append(":");
 	    }
-        } 
+        }
         return buf.toString();
     }
 

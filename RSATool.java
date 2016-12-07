@@ -115,30 +115,7 @@ public class RSATool {
 
 	// TODO:  include key generation implementation here (remove init of d)
 
-    q = getSGP();
-    p = getSGP();
-    n = p.multiply(q);
-    phi_n = (p.subtract(BigInteger.ONE)).multiply(q.subtract(BigInteger.ONE));
-
-    //System.out.println(p);
-    //System.out.println(q);
-    //System.out.println("n: "+n);
-    //System.out.println(phi_n);
-
-
-    e = BigInteger.ONE;
-
-    do
-    {
-        e = e.add(new BigInteger("2"));
-    }
-    while(!(e.gcd(phi_n).equals(BigInteger.ONE)));
-
-    d = e.modInverse(phi_n);
-
-    //CRT
-    dp = d.mod(p.subtract(BigInteger.ONE));
-    dq = d.mod(q.subtract(BigInteger.ONE));
+    initVals();
 
     }
 
@@ -188,9 +165,11 @@ public class RSATool {
 
     BigInteger enM, enC;
 
+    //return regularRSA(plaintext);
+
     enM = new BigInteger(plaintext);
     enC = encryptRSA_OAEP(plaintext);
-    //enC = enM.modPow(e,n); //regular
+
     enC = enC.modPow(e,n);
 
 	// TODO:  implement RSA-OAEP encryption here (replace following return statement)
@@ -215,6 +194,8 @@ public class RSATool {
 	if (d == null)
 	    throw new IllegalStateException("RSA class not initialized for decryption");
 
+    //return regularRSADecrypt(ciphertext)
+
     BigInteger deC, m1, m2, qinv, h, deM,valid;
 
     deC = new BigInteger(ciphertext);
@@ -236,6 +217,8 @@ public class RSATool {
 
     deM = deC.modPow(d,n);       //regular decryption
 
+    //return regularRSADecrypt(ciphertext)
+
     System.out.println("deM length: "+deM.toByteArray().length);
 
 
@@ -250,19 +233,6 @@ public class RSATool {
     System.arraycopy(deM.toByteArray(), 0, finalreturn, 0, K1);
     //System.out.println("final: "+toHexString(finalreturn));
 	return finalreturn;
-    }
-
-    public BigInteger getSGP()
-    {
-        BigInteger sgPrime, prime;
-        do
-        {
-            prime = new BigInteger(512, 3, rnd);
-            sgPrime = (prime.multiply(new BigInteger("2"))).add(BigInteger.ONE);
-        }
-        while(!sgPrime.isProbablePrime(3));
-
-        return sgPrime;
     }
 
     public BigInteger encryptRSA_OAEP(byte[] M)
@@ -364,7 +334,62 @@ public class RSATool {
         else
             return null;
     }
-    public String toHexString(byte[] block) {
+
+    private void initVals()
+    {
+        q = getSGP();
+        p = getSGP();
+        n = p.multiply(q);
+        phi_n = (p.subtract(BigInteger.ONE)).multiply(q.subtract(BigInteger.ONE));
+
+        //System.out.println(p);
+        //System.out.println(q);
+        //System.out.println("n: "+n);
+        //System.out.println(phi_n);
+
+        e = BigInteger.ONE;
+
+        do
+        {
+            e = e.add(new BigInteger("2"));
+        }
+        while(!(e.gcd(phi_n).equals(BigInteger.ONE)));
+
+        d = e.modInverse(phi_n);
+        //CRT
+        dp = d.mod(p.subtract(BigInteger.ONE));
+        dq = d.mod(q.subtract(BigInteger.ONE));
+    }
+
+    private BigInteger getSGP()
+    {
+        BigInteger sgPrime, prime;
+        do
+        {
+            prime = new BigInteger(512, 3, rnd);
+            sgPrime = (prime.multiply(new BigInteger("2"))).add(BigInteger.ONE);
+        }
+        while(!sgPrime.isProbablePrime(3));
+
+        return sgPrime;
+    }
+
+    private byte[] regularRSAEncrypt(byte[] plaintext)
+    {
+        BigInteger enM = new BigInteger(plaintext);
+        BigInteger enC = enM.modPow(e,n); //regular
+        return enC.toByteArray();
+    }
+
+    private byte[] regularRSADecrypt(byte[] ciphertext)
+    {
+        BigInteger enC = new BigInteger(ciphertext);
+        BigInteger enM = enC.modPow(d,n); //regular
+        return enM.toByteArray();
+    }
+
+
+    private String toHexString(byte[] block) {
         StringBuffer buf = new StringBuffer();
 
         int len = block.length;
@@ -377,7 +402,7 @@ public class RSATool {
         }
         return buf.toString();
     }
-    public void byte2hex(byte b, StringBuffer buf) {
+    private void byte2hex(byte b, StringBuffer buf) {
         char[] hexChars = { '0', '1', '2', '3', '4', '5', '6', '7', '8',
                             '9', 'A', 'B', 'C', 'D', 'E', 'F' };
         int high = ((b & 0xf0) >> 4);
