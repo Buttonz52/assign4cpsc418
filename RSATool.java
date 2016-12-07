@@ -215,12 +215,11 @@ public class RSATool {
 	if (d == null)
 	    throw new IllegalStateException("RSA class not initialized for decryption");
 
-    BigInteger deC, m1, m2, qinv, h, deM;
+    BigInteger deC, m1, m2, qinv, h, deM,valid;
     
     deC = new BigInteger(ciphertext);
     
-    System.out.println(deC.toByteArray().length);
-    System.out.println("deC");
+    System.out.println("deC length: "+deC.toByteArray().length);
     
     //https://en.wikipedia.org/wiki/RSA_(cryptosystem)#Using_the_Chinese_remainder_algorithm
     /*
@@ -232,14 +231,15 @@ public class RSATool {
     */
     deM = deC.modPow(d,n);       //regular decryption
     
-    System.out.println(deM.toByteArray().length);
-    System.out.println("deM");
+    System.out.println("deM length: "+deM.toByteArray().length);
     
-	deM = decryptRSA_OAEP(deM.toByteArray());
+	valid = decryptRSA_OAEP(deM.toByteArray());
     
-    if (deM == null)
+    if (valid == null)
 	    throw new IllegalArgumentException("the ciphertext is not valid, REJECT.");
 
+    System.out.println(toHexString(deM.toByteArray()));
+    
 	return deM.toByteArray();
     }
 
@@ -248,7 +248,7 @@ public class RSATool {
         BigInteger sgPrime, prime;
         do
         {
-            prime = new BigInteger(511, 3, rnd);
+            prime = new BigInteger(512, 3, rnd);
             sgPrime = (prime.multiply(new BigInteger("2"))).add(BigInteger.ONE);
         }
         while(!sgPrime.isProbablePrime(3));
@@ -266,7 +266,7 @@ public class RSATool {
         r = new byte[K0];
         rnd.nextBytes(r);
         
-		System.out.println("r: "+ toHexString(r));
+		//System.out.println("r: "+ toHexString(r));
         
         zeros = new byte[K1];
         Arrays.fill(zeros,(byte) 0);
@@ -301,7 +301,7 @@ public class RSATool {
 		//System.out.println(s);
 		//System.out.println(t);
 		//System.out.println(BIC);
-		System.out.println("C: "+ toHexString(C));
+		//System.out.println("C: "+ toHexString(C));
 			
         return BIC;
     }
@@ -309,10 +309,9 @@ public class RSATool {
     public BigInteger decryptRSA_OAEP(byte[] C)
     {
         BigInteger s,t,u,v,BIm0k1;
-        byte[] byteS,byteT,zeros,m0k1;
+        byte[] byteS,byteT,zeros,Vzeros,byteV;
           
-        System.out.println("C:");
-        System.out.println(C.length);
+        System.out.println("C length: " + C.length);
              
         //System.out.println("C: "+ toHexString(C));
          
@@ -332,23 +331,26 @@ public class RSATool {
         u = t.xor(new BigInteger(H(byteS)));
         v = s.xor(new BigInteger(G(u.toByteArray())));
         
+        byteV = v.toByteArray();
+        
 		//System.out.println(toHexString(u.toByteArray()));
 		//System.out.println(v.toByteArray().length);
-        System.out.println("v: "+ toHexString(v.toByteArray()));
-        System.out.println("u: "+ toHexString(u.toByteArray()));
+        //System.out.println("v: "+ toHexString(v.toByteArray()));
+        //System.out.println("u: "+ toHexString(u.toByteArray()));
         
         zeros = new byte[K1];
         Arrays.fill(zeros,(byte) 0);
         
-        m0k1 = new byte[C.length + zeros.length];
-        System.arraycopy(C, 0, m0k1, 0, C.length);
-        System.arraycopy(zeros, 0, m0k1, C.length, zeros.length);
+        Vzeros = new byte[K1];
+        System.arraycopy(byteV,byteV.length-K1,Vzeros,0,K1);
         
-        System.out.println("m0k1: "+ toHexString(m0k1));
+        //System.out.println("m0k1: "+ toHexString(m0k1));
         
-        BIm0k1 = new BigInteger(m0k1);
+        //System.out.println(toHexString(byteV));
+        //System.out.println(toHexString(zeros));
+        //System.out.println(toHexString(Vzeros));
         
-        if(v.equals(BIm0k1))
+        if(Arrays.equals(Vzeros,zeros))
             return (new BigInteger(C));
         else
             return null;    
