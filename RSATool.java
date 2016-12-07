@@ -166,14 +166,7 @@ public class RSATool {
     BigInteger enM, enC;
 
     //return regularRSA(plaintext);
-
-    enM = new BigInteger(plaintext);
-    enC = encryptRSA_OAEP(plaintext);
-
-    enC = enC.modPow(e,n);
-
-	// TODO:  implement RSA-OAEP encryption here (replace following return statement)
-	return enC.toByteArray();
+    return encryptRSA_OAEP(plaintext);
     }
 
 
@@ -197,45 +190,23 @@ public class RSATool {
     //return regularRSADecrypt(ciphertext)
 
     BigInteger deC, m1, m2, qinv, h, deM,valid;
-
+    byte[] deCipher;
+    
     deC = new BigInteger(ciphertext);
 
     System.out.println("deC length: "+deC.toByteArray().length);
     //System.out.println("deC array: "+toHexString(deC.toByteArray()));
 
     //https://en.wikipedia.org/wiki/RSA_(cryptosystem)#Using_the_Chinese_remainder_algorithm
-    /*
-    m1 = deC.modPow(dp,p);
-    m2 = deC.modPow(dq,q);
-    qinv = q.modInverse(p);
-    h = (qinv.multiply(m1.subtract(m2))).mod(p);
-    deM = m2.add(h.multiply(q)); //CRT
-    */
 
     //BigInteger modInv = e.multiply(d).mod(phi_n);
     //System.out.println(modInv);
-
-    deM = deC.modPow(d,n);       //regular decryption
-
+    
     //return regularRSADecrypt(ciphertext)
-
-    System.out.println("deM length: "+deM.toByteArray().length);
-
-
-	valid = decryptRSA_OAEP(deM.toByteArray());
-
-    if (valid == null)
-	    throw new IllegalArgumentException("the ciphertext is not valid, REJECT.");
-
-    //System.out.println(toHexString(deM.toByteArray()));
-
-    byte[] finalreturn = new byte[K1];
-    System.arraycopy(deM.toByteArray(), 0, finalreturn, 0, K1);
-    //System.out.println("final: "+toHexString(finalreturn));
-	return finalreturn;
+	return decryptRSA_OAEP(ciphertext);
     }
 
-    public BigInteger encryptRSA_OAEP(byte[] M)
+    public byte[] encryptRSA_OAEP(byte[] M)
     {
         BigInteger gr,BIm0k1,s,t,BIC;
         byte[] r,zeros,m0k1,byteS,byteT,C;
@@ -281,15 +252,24 @@ public class RSATool {
 		//System.out.println(t);
 		//System.out.println(BIC);
 		//System.out.println("C: "+ toHexString(C));
-
-        return BIC;
+        
+        C = (BIC.modPow(e,n)).toByteArray();
+        return C;
     }
 
-    public BigInteger decryptRSA_OAEP(byte[] C)
+    public byte[] decryptRSA_OAEP(byte[] C)
     {
-        BigInteger s,t,u,v,BIm0k1;
-        byte[] byteS,byteT,zeros,Vzeros,byteV;
+        BigInteger s,t,u,v,BIm0k1,deC,deM;
+        byte[] byteS,byteT,zeros,Vzeros,byteV,newC;
 
+        deM = new BigInteger(CRT(C));   //CRT
+        //deC = new BigInteger(C);
+        //deM = deC.modPow(d,n);       //regular decryption
+        
+        System.out.println("deM length: "+deM.toByteArray().length);
+            
+        C = deM.toByteArray();
+        
         System.out.println("C length: " + C.length);
 
         //System.out.println("C: "+ toHexString(C));
@@ -329,10 +309,31 @@ public class RSATool {
         //System.out.println(toHexString(zeros));
         //System.out.println(toHexString(Vzeros));
 
-        if(Arrays.equals(Vzeros,zeros))
-            return (v);
-        else
-            return null;
+        if(!(Arrays.equals(Vzeros,zeros)))
+            throw new IllegalArgumentException("the ciphertext is not valid, REJECT.");
+
+        //System.out.println(toHexString(deM.toByteArray()));
+
+        byte[] finalreturn = new byte[K1];
+        System.arraycopy(v.toByteArray(), 0, finalreturn, 0, K1);
+        //System.out.println("final: "+toHexString(finalreturn)); 
+
+        return finalreturn;
+    }
+    
+    private byte[] regularRSAEncrypt(byte[] plaintext)
+    {
+        BigInteger enM = new BigInteger(plaintext);
+        BigInteger enC = enM.modPow(e,n); //regular
+        return enC.toByteArray();
+    }
+
+    private byte[] regularRSADecrypt(byte[] ciphertext)
+    {
+        BigInteger enC = new BigInteger(ciphertext);
+        //BigInteger enM = enC.modPow(d,n); //regular
+        BigInteger enM = new BigInteger(CRT(ciphertext));
+        return enM.toByteArray();
     }
 
     private void initVals()
@@ -373,21 +374,19 @@ public class RSATool {
 
         return sgPrime;
     }
-
-    private byte[] regularRSAEncrypt(byte[] plaintext)
+    
+    private byte[] CRT(byte[] ciphertext)
     {
-        BigInteger enM = new BigInteger(plaintext);
-        BigInteger enC = enM.modPow(e,n); //regular
-        return enC.toByteArray();
+        BigInteger m1, m2, qinv, h, deM,deC;
+        
+        deC = new BigInteger(ciphertext);        
+        m1 = deC.modPow(dp,p);
+        m2 = deC.modPow(dq,q);
+        qinv = q.modInverse(p);
+        h = (qinv.multiply(m1.subtract(m2))).mod(p);
+        deM = (m2.add(h.multiply(q))); //CRT
+        return deM.toByteArray();
     }
-
-    private byte[] regularRSADecrypt(byte[] ciphertext)
-    {
-        BigInteger enC = new BigInteger(ciphertext);
-        BigInteger enM = enC.modPow(d,n); //regular
-        return enM.toByteArray();
-    }
-
 
     private String toHexString(byte[] block) {
         StringBuffer buf = new StringBuffer();
