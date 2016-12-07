@@ -294,13 +294,14 @@ public class RSATool {
         System.arraycopy(byteT, 0, C, byteS.length, byteT.length);
         
         BIC = new BigInteger(C);
-        }while((BIC.compareTo(n) == 1));// || ((new BigInteger(r)).compareTo(BigInteger.ZERO) == -1) || (t.compareTo(BigInteger.ZERO) == -1));
+        }while((BIC.compareTo(n) == 1) || ((new BigInteger(C)).compareTo(BigInteger.ZERO) == -1));
             
-		System.out.println(new BigInteger(r));
-		System.out.println(BIm0k1);
-		System.out.println(s);
-		System.out.println(t);
-		System.out.println(BIC);
+		//System.out.println(new BigInteger(r));
+		//System.out.println(BIm0k1);
+		//System.out.println(s);
+		//System.out.println(t);
+		//System.out.println(BIC);
+		System.out.println("C: "+ toHexString(C));
 			
         return BIC;
     }
@@ -333,7 +334,7 @@ public class RSATool {
         
 		//System.out.println(toHexString(u.toByteArray()));
 		//System.out.println(v.toByteArray().length);
-        //System.out.println("v: "+ toHexString(v.toByteArray()));
+        System.out.println("v: "+ toHexString(v.toByteArray()));
         System.out.println("u: "+ toHexString(u.toByteArray()));
         
         zeros = new byte[K1];
@@ -343,7 +344,7 @@ public class RSATool {
         System.arraycopy(C, 0, m0k1, 0, C.length);
         System.arraycopy(zeros, 0, m0k1, C.length, zeros.length);
         
-        //System.out.println("m0k1: "+ toHexString(m0k1));
+        System.out.println("m0k1: "+ toHexString(m0k1));
         
         BIm0k1 = new BigInteger(m0k1);
         
