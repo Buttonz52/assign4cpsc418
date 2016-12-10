@@ -1,0 +1,246 @@
+\documentclass{assignment}
+
+\coursetitle{Introduction to Cryptography}
+\courselabel{CPSC 418}
+\exercisesheet{Home Work \#[4]}{}
+\student{Brendan Petras - 10137098}
+\semester{Fall 2016}
+%\usepackage[pdftex]{graphicx}
+%\usepackage{subfigure}
+\usepackage{amsmath}
+\usepackage{cancel}
+\usepackage{amsmath}
+
+\begin{document}
+
+\begin{center}
+\renewcommand{\arraystretch}{2}
+\begin{tabular}{|c|c|c|} \hline
+Problem & Marks \\ \hline \hline
+1 & \\ \hline
+2 & \\ \hline
+3 & \\ \hline
+4 & \\ \hline
+5 & \\ \hline
+6 & \\ \hline
+7 & \\ \hline \hline
+Total & \\ \hline
+\end{tabular}
+\end{center}
+
+\bigskip
+
+\clearpage
+
+\begin{problemlist}
+\pbitem
+\begin{problem}
+\begin{enumerate}
+
+\item
+$\Phi(n) = (p-1)(q-1) = pq - p - q + 1$ \newline
+$\Phi(n) = n - p - \frac{n}{p} + 1$ \newline
+$\Phi(n)p = np - p^2 - n + p$ \newline
+$0 = np - p^2 - n + p -\Phi(n)p$ - rearrange \newline
+$0 = p^2 + \Phi(n)p - np - p + n$ - group like terms \newline
+$0 = p^2 + (\Phi(n) - n - 1)p + n$ \newline
+We can find the roots of this quadratic which will return p and q. \newline
+With, $a = 1, b = \Phi(n) - n - 1, c = n$ \newline
+$x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}$, x will return two solutions, namely $p$ and $q$, assuming  $\sqrt{b^2-4ac} \neq 0.$\newline
+
+\item
+Start with $M = M^1$ \newline
+Notice that $gcd(e_1,e_2) = 1$ means that $e_1x + e_2y = 1$ \newline
+Notice that $M^1 = M^{e_1x + e_2y}$ \newline
+$ = M^{e_1x} * M^{e_2y}$ \newline
+$ = C_1^{x} * C_2^{y}$ - since $M^{e_1} = C_1$ and $M^{e_2} = C_2$  \newline
+Since $C_1,C_2,x,y$ are known we can find $M$.\newline
+
+\item
+Given $(e,n_1),(e,n_2),...,(e,n_i)$ and $gcd(n_i,n_j) = 1$, with $i \neq j$\newline
+In general, $C_i \equiv M^e$ (mod $n_i$), for all $i$. Assume $k \geq e$ where $k$ is number of participants. \newline
+By The Chinese Remainder Theorem, we can efficiently compute $C$, \newline
+with $C \equiv C_i$ (mod $n_i$) for $1 \geq i \geq k$. So $C \equiv M^e$ (mod $n$) with ($n = \prod_{1}^{i} n_i$). \newline
+Which is to say $M^e$ is not modded by any $n_i$ \newline
+Thus finding $C_i = (M^e)^\frac{1}{e}$ is a eth root calculation \newline
+
+\item
+Given $e = 3$ Bob wants to send $M, M+r,M+s$ o Alice \newline
+$M$ - unknown, $r,s,C,C_r,C_s$ - known \newline
+$C  \equiv M^3$ (mod $n$) \newline
+$C_r \equiv (M + r)^3$  (mod $n$) \newline
+$C_s \equiv (M + s)^3$  (mod $n$) \newline
+
+$C \equiv M^3$  (mod $n$) \newline
+$C_r \equiv (M + r)^3 \equiv M^3 + 3M^2r + 3Mr^2 + r^3$  (mod $n$) \newline
+$C_s \equiv (M + s)^3 \equiv M^3 + 3M^2s + 3Ms^2 + s^3$  (mod $n$) \newline
+$C_r \equiv C_r - C \equiv 3M^2r + 3Mr^2 + r^3$  (mod $n$) \newline
+$C_s \equiv C_s - C \equiv 3M^2s + 3Ms^2 + s^3$  (mod $n$) \newline
+$\equiv 3M^2r + 3Mr^2$  (mod $n$) - remove $r^3$ since it is a known constant \newline
+$\equiv 3M^2s + 3Ms^2$  (mod $n$) - remove $s^3$ since it is a known constant \newline
+$\equiv 3Mr(M + r)$  (mod $n$) - factor $Mr$\newline
+$\equiv 3Ms(M + s)$  (mod $n$) - factor $Ms$ \newline
+$\equiv 3Mr\sqrt[3]{C_r}$  (mod $n$) - sub $C_r$ \newline
+$\equiv 3Ms\sqrt[3]{C_s}$  (mod $n$) - sub $C_s$ \newline
+$M \equiv 1(3r\sqrt[3]{C_r})^{-1}$  (mod $n$) - modular inverse $C_r$ \newline
+$M \equiv 1(3s\sqrt[3]{C_s})^{-1}$  (mod $n$) - modular inverse $C_s$ \newline
+
+\end{enumerate}
+\clearpage
+\end{problem}
+
+\begin{problem}
+\pbitem
+
+\begin{enumerate}
+
+Prove CRT decrypts like normal, prove $m^{\prime} = m$ \newline
+$ m \equiv pxM_q + qyM_p$ (mod $n$) \newline
+$ m \equiv qyM_p$ (mod $p$) \newline
+$ m \equiv M_p$ (mod $p$) - since $gcd(px + qy) = 1 -> gy \equiv 1$ (mod $p$)  \newline
+$ m \equiv pxM_q$  (mod $q$) \newline
+$ m \equiv M_q$ (mod $p$) - since $gcd(px + qy) = 1 -> px \equiv 1$ (mod $q$)  \newline
+
+$m^{\prime} \equiv C^d$ (mod $n$) \newline
+$m^{\prime} \equiv C^{d_p + \cancel{(p - 1)L}}$ (mod $p$) - by Fermat's LT \newline
+$m^{\prime} \equiv M_p$ (mod $p$) \newline
+$m^{\prime} \equiv C^{d_q + \cancel{(q - 1)T}}$ (mod $q$) - by Fermat's LT \newline
+$m^{\prime} \equiv M_q$ (mod $q$)\newline
+
+So, $gcd(p,q) = 1$ \newline
+$px + qy = 1$ \newline
+$M(px + qy) = M$ \newline
+$Mpx + Mqy = M$ \newline
+$M_qpx + M_pqy \equiv M$ (mod $n$) \newline
+
+ 
+
+\end{enumerate}
+
+
+\clearpage
+\end{problem}
+
+\begin{problem}
+\pbitem
+
+Prove that the cryptosystem is NOT IND-CCA
+
+A cryptosystem is not IND-CCA secure if some active attacker, with some decryption oracle can, in polynomial time, select two plaintexts $M_1, M_2$ and correctly distinguish between the encryptions of $M_1$ and $M_2$ with probability significantly greater than 1/2.
+
+Start with $M_1,M_2$ with $M_1 \neq 0^n$ \newline
+Apply the attack $C^{\prime} =  (s||t \oplus M_1)$, we can examine $C^{\prime}$ since we have a decryption oracle. \newline
+
+$C^{\prime} =  (s||t \oplus M_1)$ \newline
+$C^{\prime} =  (s||H(r) \oplus M_1\oplus M_i)$ \newline
+if $i=1$ then $C^{\prime} =  (s||H(r))$ \newline
+
+Apply the decryption function $D$ \newline
+
+$D(C^{\prime}) = H(s^d) \oplus H(r)$ (mod $n$)\newline
+$D(C^{\prime}) = H(r^{ed}) \oplus H(r)$ (mod $n$) \newline
+$D(C^{\prime}) = H(r) \oplus H(r)$ (mod $n$) \newline
+$D(C^{\prime}) = ^m$ \newline
+
+Then we know with 100\% probability which plaintext the ciphertext belongs to. \newline
+Thus it is not IND-CCA secure.
+
+\clearpage
+\end{problem}
+
+
+\begin{problem}
+\pbitem
+\begin{enumerate}
+\item
+
+\begin{enumerate}
+
+\item
+
+Given $(r,s_1),(r,s_2),M_1,M_2,Hash function$ $H$. Find $k$. \newline
+
+$ks_1 \equiv H(M_1,r) - xr$ (mod $p-1$) \newline
+$ks_2 \equiv H(M_1,r) - xr$ (mod $p-1$) \newline
+$ks_1 - ks_2 + H(M_1,r) - xr - H(M_2,r) + xr + (p - 1)L - (p - 1)T = 0$ converting from congruence to equality. With L,T real numbers. \newline
+$ks_1 - ks_2 + H(M_1,r) - xr - H(M_2,r) + xr + (p - 1)L - (p - 1)T = 0$\newline
+$k(s_1 - s_2) + H(M_1,r) - H(M_2,r) + \cancel{xr} - \cancel{xr} + (p - 1)L - (p - 1)T = 0$\newline
+$k(s_1 - s_2) \equiv H(M_2,r) - H(M_1,r)$ (mod $p-1$) - move back to congruence \newline
+$k \equiv [H(M_2,r) - H(M_1,r)] (s_1 - s_2)^{-1}$ (mod $p-1$) - modular inverse since $gcd(s_1 - s_2, p-1) = 1$\newline
+
+\item
+
+We now know k. \newline
+
+$ks_1 \equiv H(M_1,r) - xr$ (mod $p-1$)\newline
+$xr \equiv H(M_1,r) -ks_1$ (mod $p-1$)\newline
+$x \equiv r^{-1}[H(M_1,r) -ks_1]$ (mod $p-1$) - since $gcd(r,p-1) = 1$\newline
+
+\end{enumerate}
+
+\item
+
+\begin{enumerate}
+
+\item
+Prove $y^rr^s \equiv g^m$ (mod $p-1$) \newline
+$y^rr^s \equiv g^m$ (mod $p-1$)  \newline
+$y^rg^{su}y^{vs} \equiv g^{su}$ (mod $p-1$)  \newline
+$y^ry^{vs}g^{su} \equiv g^{su}$ (mod $p-1$) - now lets try getting $y^ry^{vs}$ to equal 1 \newline
+$y^{r + vs}g^{su} \equiv g^{su}$ (mod $p-1$) \newline
+$y^{r + -rv^{*}v}g^{su} \equiv g^{su}$ (mod $p-1$) \newline
+$y^{(r + -r)1}g^{su} \equiv g^{su}$ (mod $p-1$) - since $vv^* \equiv 1$ (mod $p-1$) \newline
+$g^{su} \equiv g^{su}$ (mod $p-1$)\newline
+
+\item
+When we return the hash function H back into ElGamal, we no longer can find a $m$ in $g^{H(M,r)}$ such that $m = H(M,r)$. This is the deffinition of pre-image resistance.
+
+\end{enumerate}
+
+\clearpage
+
+\item
+
+\begin{enumerate}
+
+\item
+Prove $R \equiv ru$ (mod $p-1$) \newline
+$ R = rup -r(p-1) + p(p-1)L$ - for some real $L$  \newline
+$ R \equiv rup + p^2 - p$ (mod $p-1$) \newline
+$ R \equiv p(ru + p - 1)$ (mod $p-1$) \newline
+$ R \equiv rup + \cancel{p(p - 1)}$ (mod $p-1$) \newline
+$ R \equiv ru(p - 1 + 1)$ (mod $p-1$) \newline
+$ R \equiv \cancel{ru(p - 1)} + ru)$ (mod $p-1$) \newline
+$ R \equiv ru$ (mod $p-1$) \newline
+
+\item
+Prove $R^S \equiv r^{su}$ (mod $p$) \newline
+$R^S \equiv r^{su}$ (mod $p$) \newline
+$R^{su} \equiv [rup - r(p-1)]^{su}$ (mod $p$) \newline
+$R^{su} \equiv (\cancel{rup^{su}} -\cancel{rp^{su}} + r^{su})$ (mod $p$) \newline
+$R^{su} \equiv  r^{su}$ (mod $p$) \newline
+$R^{S} \equiv  r^{su}$ (mod $p$) \newline
+
+
+\item
+Prove $y^RR^S \equiv g^{H(M^{\prime})}$ (mod $p$) - This shows (R,S) is a valid signature to message $M^{\prime}$ \newline
+$y^RR^S \equiv g^{H(M^{\prime})}$ (mod $p$) \newline
+$y^{ru}r^{su} \equiv g^{H(M^{\prime})}$ (mod $p$) \newline
+$y^{ru}g^{ksu} \equiv g^{H(M^{\prime})}$ (mod $p$) \newline
+$g^{xru}g^{ksu} \equiv g^{H(M^{\prime})}$ (mod $p$) \newline
+$g^{xru}g^{[H(M) - xr]u} \equiv g^{H(M^{\prime})}$ (mod $p$) \newline
+$g^{xru}g^{H(M)u} g^{-xru} \equiv g^{H(M^{\prime})}$ (mod $p$) \newline
+$\cancel{g^{xru}}g^{H(M)u} \cancel{g^{-xru}} \equiv g^{H(M^{\prime})}$ (mod $p$) \newline
+$g^{H(M)u} \equiv g^{H(M^{\prime})}$ (mod $p$) \newline
+$g^{H(M^{\prime})} \equiv g^{H(M^{\prime})}$ (mod $p$) - via step 3 and the EEA. \newline
+
+
+
+
+
+\end{enumerate}
+\end{enumerate}
+\end{problem}
+
+\end{problemlist}
+\end{document}

@@ -114,11 +114,13 @@ public class RSATool {
 	rnd = new SecureRandom();
 
 	// TODO:  include key generation implementation here (remove init of d)
-
+    debug("initiating values");
     initVals();
 
+    BigInteger modInv = e.multiply(d).mod(phi_n);
+    debug("checking d times e is congruent to 1 mod phi_n. 1? -> "+modInv);
+    
     }
-
 
     /**
      * Construct instance for encryption, with n and e supplied as parameters.  No
@@ -130,22 +132,14 @@ public class RSATool {
 	debug = setDebug;
 	// initialize random number generator
 	rnd = new SecureRandom();
-
 	n = new_n;
 	e = new_e;
-
 	d = p = q = null;
-
-	// TODO:  initialize RSA decryption variables here
     }
 
-    public BigInteger get_n() {
-	return n;
-    }
+    public BigInteger get_n() {	return n; }
 
-    public BigInteger get_e() {
-	return e;
-    }
+    public BigInteger get_e() { return e; }
 
     /**
      * Encrypts the given byte array using RSA-OAEP.
@@ -163,12 +157,10 @@ public class RSATool {
 	if (plaintext.length > K-K0-K1)
 	    throw new IllegalArgumentException("plaintext longer than one block");
 
-    BigInteger enM, enC;
-
+    debug("Start Encrption");
     //return regularRSA(plaintext);
     return encryptRSA_OAEP(plaintext);
     }
-
 
     /**
      * Decrypts the given byte array using RSA.
@@ -186,22 +178,8 @@ public class RSATool {
 	// make sure class is initialized for decryption
 	if (d == null)
 	    throw new IllegalStateException("RSA class not initialized for decryption");
-
-    //return regularRSADecrypt(ciphertext)
-
-    BigInteger deC, m1, m2, qinv, h, deM,valid;
-    byte[] deCipher;
     
-    deC = new BigInteger(ciphertext);
-
-    System.out.println("deC length: "+deC.toByteArray().length);
-    //System.out.println("deC array: "+toHexString(deC.toByteArray()));
-
-    //https://en.wikipedia.org/wiki/RSA_(cryptosystem)#Using_the_Chinese_remainder_algorithm
-
-    //BigInteger modInv = e.multiply(d).mod(phi_n);
-    //System.out.println(modInv);
-    
+    debug("Starting Decrypt");
     //return regularRSADecrypt(ciphertext)
 	return decryptRSA_OAEP(ciphertext);
     }
@@ -210,13 +188,12 @@ public class RSATool {
     {
         BigInteger gr,BIm0k1,s,t,BIC;
         byte[] r,zeros,m0k1,byteS,byteT,C;
-
+        int i = 0;
         do
         {
         r = new byte[K0];
         rnd.nextBytes(r);
-
-		//System.out.println("r: "+ toHexString(r));
+        debug("iteration: "+i);
 
         zeros = new byte[K1];
         Arrays.fill(zeros,(byte) 0);
@@ -231,27 +208,23 @@ public class RSATool {
         s = BIm0k1.xor(gr);
         byteS = s.toByteArray();
 
-		//System.out.println("s: "+ toHexString(byteS));
-
         t = (new BigInteger(r)).xor(new BigInteger(H(byteS)));
         byteT = t.toByteArray();
-
-		//System.out.println("t: "+ toHexString(byteT));
 
         C = new byte[byteS.length + byteT.length];
 
         System.arraycopy(byteS, 0, C, 0, byteS.length);
         System.arraycopy(byteT, 0, C, byteS.length, byteT.length);
-
+        
         BIC = new BigInteger(C);
+        i++;
         }while((BIC.compareTo(n) == 1) || ((new BigInteger(C)).compareTo(BigInteger.ZERO) == -1));
-
-		//System.out.println(new BigInteger(r));
-		//System.out.println(BIm0k1);
-		//System.out.println(s);
-		//System.out.println(t);
-		//System.out.println(BIC);
-		//System.out.println("C: "+ toHexString(C));
+        
+        debug("r length = " + r.length + ". With Hex: "+ toHexString(r));        
+        debug("s length = " + byteS.length + ". With Hex: "+ toHexString(byteS));    
+        debug("t length = " + byteT.length + ". With Hex: "+ toHexString(byteT));       
+        debug("C length = " + C.length + ". With Hex: "+ toHexString(C));
+        debug("Mod powing and done Encrypt");
         
         C = (BIC.modPow(e,n)).toByteArray();
         return C;
@@ -262,17 +235,13 @@ public class RSATool {
         BigInteger s,t,u,v,BIm0k1,deC,deM;
         byte[] byteS,byteT,zeros,Vzeros,byteV,newC;
 
+
         deM = new BigInteger(CRT(C));   //CRT
+        //debug("decrypting using regular RSA");
         //deC = new BigInteger(C);
-        //deM = deC.modPow(d,n);       //regular decryption
-        
-        System.out.println("deM length: "+deM.toByteArray().length);
+        //deM = deC.modPow(d,n);       //regular decryption   
             
         C = deM.toByteArray();
-        
-        System.out.println("C length: " + C.length);
-
-        //System.out.println("C: "+ toHexString(C));
 
         byteS = new byte[K-K0];
         byteT = new byte[K0];
@@ -280,22 +249,16 @@ public class RSATool {
         System.arraycopy(C,112,byteT,0,K0);
 
         s = new BigInteger(byteS);
-
-		//System.out.println("s: "+ toHexString(byteS));
+        debug("s length = " + byteS.length + ". With Hex: "+ toHexString(byteS));
 
         t = new BigInteger(byteT);
-
-		//System.out.println("t: "+ toHexString(byteT));
+        debug("t length = " + byteT.length + ". With Hex: "+ toHexString(byteT));
 
         u = t.xor(new BigInteger(H(byteS)));
         v = s.xor(new BigInteger(G(u.toByteArray())));
-
         byteV = v.toByteArray();
-
-		//System.out.println(toHexString(u.toByteArray()));
-		//System.out.println(v.toByteArray().length);
-        //System.out.println("v: "+ toHexString(v.toByteArray()));
-        //System.out.println("u: "+ toHexString(u.toByteArray()));
+        debug("u length = " + u.toByteArray().length + ". With Hex: "+ toHexString(u.toByteArray()));
+        debug("v length = " + byteV.length + ". With Hex: "+ toHexString(byteV));
 
         zeros = new byte[K1];
         Arrays.fill(zeros,(byte) 0);
@@ -365,20 +328,25 @@ public class RSATool {
     private BigInteger getSGP()
     {
         BigInteger sgPrime, prime;
+        int i =0;
         do
         {
+            System.out.println("SGP: "+i);
             prime = new BigInteger(512, 3, rnd);
             sgPrime = (prime.multiply(new BigInteger("2"))).add(BigInteger.ONE);
+            i++;
         }
         while(!sgPrime.isProbablePrime(3));
 
         return sgPrime;
     }
     
+    //https://en.wikipedia.org/wiki/RSA_(cryptosystem)#Using_the_Chinese_remainder_algorithm
     private byte[] CRT(byte[] ciphertext)
     {
         BigInteger m1, m2, qinv, h, deM,deC;
         
+        debug("decrypting using CRT");
         deC = new BigInteger(ciphertext);        
         m1 = deC.modPow(dp,p);
         m2 = deC.modPow(dq,q);
